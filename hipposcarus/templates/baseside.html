@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block body %}
+      <div class="row">
+        <div id="hippo_sidebar" class="three columns">
+          <!-- sidebar -->
+          {% block pagemenu %}
+	  {% endblock %}
+        </div>
+        <div class="nine columns">
+          <!-- main content -->
+          {% block content %}
+          {% endblock %}      
+        </div>
+      </div>
+    </div>
+{% endblock %}

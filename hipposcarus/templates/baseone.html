@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block in_head %}
+<style>
+  #hippo_onecol_content {
+      padding-top: 80px;
+  }
+</style>
+
+{% endblock %}
+
+{% block body %}
+      <div id="hippo_onecol_content" class="row">
+        <!-- <div id="hippo_sidebar" class="three columns"> -->
+        <!--   <\!-- sidebar -\-> -->
+        <!--   {% block pagemenu %} -->
+	<!--   {% endblock %} -->
+        <!-- </div> -->
+        <div class="twelve columns">
+          <!-- main content -->
+          {% block content %}
+          {% endblock %}      
+        </div>
+      </div>
+    </div>
+{% endblock %}

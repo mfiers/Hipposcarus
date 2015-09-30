@@ -1,0 +1,74 @@
+{% extends "baseside.html" %}
+
+{% block content %}
+
+{% if empty_result %}
+<h4 class="ui center aligned header">No data found</h4>
+{% elif fileview %}
+<h2 class="ui center aligned header">File overview</h2>
+{% for file in files %}
+<div class="row">
+  <div class="one column">{{ loop.index }}</div>
+  <div class="eight columns"><b><a href="/sha1sum/{{file.sha1sum}}">{{ file.filename }}</a></b></div>
+  <div class="three columns">{{ file.filesize|humanfilesize }}</div>
+</div>
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns">{{ file.username }}</div>
+  <div class="three columns"><small>mtime:</small> {{ file.mtime|humanday }}</div>
+  <div class="five columns"><small><a href="/sha1sum/{{file.sha1sum}}">{{ file.sha1sum }}</a></small></div>
+</div>
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns">{{ file['volume'] }}</div>
+  <div class="eight columns"><small>{{ file.fullpath }}</small></div>
+</div>
+{% endfor %}
+{% else %}
+  <h2 class="ui center aligned header">Aggregate plot ({{ stime }})</h2>
+  <img src="{{aggplot}}">
+{% endif %}
+
+{% endblock %}
+
+{% block pagemenu %}
+
+<div class="row">
+<form action="/aggregate" method="get">
+  <fieldset>
+    <p>
+      <div class="twelve columns">
+        <label for="aggon">Aggregate on</label>
+        <select id="aggon" name="aggon"  class="u-full-width">
+          {% for c in csum.columns if not c in ['count', 'sum'] %}
+          <option{% if c == aggon %} selected{% endif %} value="{{c}}">{{c}}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <label>Filter on</label>
+      {% for fname in filters %}
+      <div class="twelve columns">
+        <select name="filter_{{fname}}" placeholder="{{fname}}"  class="u-full-width">
+        <option value="">&lt;{{fname}}&gt;</option>
+        {% for opt in filters[fname] %}
+        <option value="{{opt}}"{% if opt in filters_selected[fname] %} selected{% endif %}>
+          {% if opt is none %}(undefined){% else %}{{ opt }}{% endif %}
+        </option>
+        {% endfor %}
+        </select>
+      </div>
+      {% endfor %}
+    </p>
+    <p>
+      <label class="fileview" for="fileview">
+        <input name="fileview" id="fileview" type="checkbox"{% if fileview %} checked{% endif %}>
+        Show files
+      </label>
+      <input type="submit" value="Go" class="u-full-width">
+    </p>
+  </fieldset>
+</form>
+</div>
+
+{% endblock %}
+

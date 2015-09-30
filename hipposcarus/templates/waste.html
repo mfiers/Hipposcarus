@@ -1,0 +1,65 @@
+{% extends "baseone.html" %}
+
+{% block content %}
+
+{% if text is none %}
+<h2 class="ui center aligned header">Wasting  <b>{{ total_waste|humanfilesize }}</b></h2>
+<div class="row">
+  <div class="six columns">
+    Report date: {{ w.time }} </div>
+  <div class="six columns" style="text-align:right;">
+    <a href="/waste/text">Text version</a>
+</div></div>
+
+{% for name, rec in data.iterrows() %}{% set outerloop=loop %}
+<div class="row" style="background-color: #eee;">
+  <div class="one column">{{loop.index}}</div>
+  <div class="two columns"><small>filesize: </small>{{ rec.filesize|humanfilesize }}</div>
+  <div class="two columns"><small>copies: </small>{{ csum[rec['_id']]|length }}</div>
+  <div class="two columns"><small>total: </small>{{ rec.total_usage|humanfilesize }}</div>
+  <div class="two columns"><small>waste: </small><b>{{ rec.waste|humanfilesize }}</b></div>
+  <div class="three columns"><a href="/sha1sum/{{rec['_id']}}" title="Sha1sum: {{rec['_id']}}">{{ rec['_id']|shacol }}</a></div>
+</div>
+{% for fl in csum[rec['_id']] %}
+<div class="row">
+  <div class="one columns">&nbsp;</div>
+  <div class="one columns">{{outerloop.index}}.{{loop.index}}</div>
+  <div class="ten columns"><b>{{ fl.filename }}</b></div>
+</div>
+<div class="row">
+  <div class="two columns">&nbsp;</div>
+  <div class="two columns">{{ fl.volume }}</div>
+  <div class="two columns">{{ fl.username }}</div>
+  <div class="two columns">{{ fl.filesize|humanfilesize }}</div>
+  <div class="four columns"><small>mtime/atime: {{ fl.mtime|humanday }}/{{ fl.atime|humanday }}</small></div>
+</div>
+<div class="row">
+  <div class="two columns">&nbsp;</div>
+  <div class="ten columns"><small>{{ fl.dirname }}</small></div>
+</div>
+{% endfor %}
+{% endfor %}
+
+{% else %} <!-- if text is None -->
+<pre>
+<b>Mad Waste report</b>
+################
+
+Report date : {{ w.time }}
+Wasting     : <b>{{ total_waste|humanfilesize }}</b> ({{ total_waste }} bytes)
+
+{% for name, rec in data.iterrows() %}{% set outerloop=loop %}
+{{ "%3d"|format(loop.index)}}:     Sha1sum     : <a href="/sha1sum/{{rec['_id']}}">{{ rec._id }}</a>
+         Filesize    : <b>{{ rec.filesize|humanfilesize }}</b> ( {{ rec.filesize }} bytes )
+         No copies   : {{ csum[rec['_id']]|length }}
+         Total space : {{ rec.total_usage|humanfilesize }}
+         Wasted      : <b>{{ rec.waste|humanfilesize }}</b>
+{%- for fl in csum[rec['_id']] %}
+              {{  "%3d.%-3d"|format(outerloop.index, loop.index)}}: {{ fl.filename }} <b>{{ fl.username }}</b>@{{ fl.volume }}  ({{ fl.filesize|humanfilesize }})
+                      {{ fl.dirname }}
+{%- endfor %}{% endfor %}
+</pre>
+{% endif %} <!-- if text is None -->
+
+
+{% endblock %}

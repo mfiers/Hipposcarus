@@ -1,0 +1,116 @@
+{% extends "baseone.html" %}
+
+{% block in_docready %}
+
+$('#input_sha1sum').keypress(function (e) {
+    if (e.which == 13) {
+        url = "/sha1sum/" + $("#input_sha1sum").val();
+        window.location = url;
+        return false;
+    }
+});
+                         
+{% endblock %}
+
+
+{% block content %}
+
+
+<form>
+  <fieldset>
+    <label for="sha1sum">Sha1sum:</label> <input id="input_sha1sum" type="text" id="sha1sum" size=40 />
+
+  </fieldset>
+  </fieldset>
+</form>
+
+{% if sha1sum is not none %}
+
+<h2 class="ui center aligned header">File</h2>
+
+<span style="font-size: 14px;"><b>Sha1sum: {{ sha1sum|shacol }} <span style='font-family: monospace;'>{{ sha1sum }}</span></b></span><p>
+
+{% for file in res %}
+{% set anyfile=file %}
+<div class="row">
+  <div class="one column">{{ loop.index }}</div>
+  <div class="eight columns"><b><a href="/sha1sum/{{file.sha1sum}}">{{ file.filename }}</a></b></div>
+  <div class="three columns">
+    {% if file.filesize %}
+    {{ file.filesize|humanfilesize }}
+    {% else %}n.a.{% endif %}
+  </div>
+</div>
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns">{{ file.username }}</div>
+  <div class="three columns"><small>host: </small>{{ file.host }}</div>
+  <div class="five columns"><small>volume: </small>{{ file['volume'] }}</div>
+</div>
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns"><small>userid: </small>{{ file.userid }}</div>
+  <div class="eight columns"><small>path: {{ file.dirname }}</small></div>
+</div>
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns"><small>saved: </small>
+    {% if file.save_time %}{{ file.save_time|humanday }}
+    {% else %}n.a.{% endif %}</div>
+  <div class="three columns"><small>mtime: </small>
+    {% if file.mtime %}{{ file.mtime|humanday }}
+    {% else %}n.a.{% endif %}</div>
+  <div class="five columns"><small>atime: </small>
+    {% if file.atime %}{{ file.atime|humanday }}
+    {% else %}n.a.{% endif %}
+  </div> 
+</div>
+{% endfor %}
+
+{% if transactions %}
+<h2 class="ui center aligned header">Transactions</h2>
+{% for t in transactions %}
+<div class="row">
+  <div class="one column">{{ loop.index }}</div>
+  <div class="three columns"><small>ran: </small>
+    <span title="{{t.time}}">{{ t.time|humanday }}</span> </div>
+  <div class="six columns"><small>on: </small><span title="{{t.uname}}">{{ t.host }}</span></div>
+  <div class="one columns"><small><span title="Transaction id: {{t._id}}">{{ t._id|shacol }}</span></small></div>
+</div>
+{% for icat in t.iocats %}
+{% set icnt=0 %}
+{% for io in t.io %}
+{% if io['category'] == icat %}
+{% set icnt = icnt + 1 %}
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  {% if icat == 'executable' %} {% set ccl="bgred" %}
+  {% elif icat == 'input' %} {% set ccl="bggreen" %}
+  {% elif icat == 'output' %} {% set ccl="bgyellow" %}
+  {% elif icat == 'db' %} {% set ccl="bgblue" %}
+  {% else %} {% set ccl="" %}  {% endif %}
+  <div class="two columns {{ccl}}">
+    {% if icnt == 1 %}<b>{{ icat }}</b>{% else %}&nbsp;{% endif %}
+  </div>
+    <div class="seven columns">
+    {% if io.sha1sum == sha1sum %}<b>{{ io.filename }}</b>
+    {% else %}<a href="/sha1sum/{{io.sha1sum}}">{{ io.filename }}</a>{% endif %}      
+</div>
+    <div class="two columns">
+    {% if io.sha1sum == sha1sum %}<small><a title="Sha1sum: {{io.sha1sum}}" href="/sha1sum/{{io.sha1sum}}">{{ io.sha1sum|shacol }}</a></small>
+    {% else %}<small><a title="Sha1sum: {{io.sha1sum}}" href="/sha1sum/{{io.sha1sum}}">{{ io.sha1sum|shacol }}</a></small>{% endif %}
+    </div>
+</div>
+{% endif %}{% endfor %}{% endfor %}
+<div class="row">
+  <div class="two columns">&nbsp;</div>
+  <div class="ten columns"><small>
+    <xmp>{{ t.cl }}
+    </xmp></small>
+  </div>
+</div>
+
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endblock %}

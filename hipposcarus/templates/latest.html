@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block sidebarstats %}
+<hr>
+<span style='font-size:small; color: white;'>
+  Date: {{ time.strftime("%Y-%m-%y") }}
+</span>
+{% endblock %}
+
+{% block content %}
+
+<!-- <table class="pure-table"> -->
+<!--   <tbody> -->
+<!--     <tr> -->
+<!--       <th>No Bytes</th> -->
+<!--       <td>{{ nobytes }}</td> -->
+<!--     </tr> -->
+    
+<!--     <tr> -->
+<!--       <th>No Files</th> -->
+<!--       <td>{{ nofiles }}</td> -->
+<!--     </tr> -->
+<!--   </tbody> -->
+<!-- </table> -->
+
+
+<!--View: {% for c in csum.columns %}{{ c }} {% endfor %}-->
+<img src="{{sumplot}}">
+<img src="{{cntplot}}">
+
+
+{% endblock %}
+

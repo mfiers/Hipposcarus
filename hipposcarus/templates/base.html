@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link rel="shortcut icon" href="/static/img/favicon.ico">
+    <!-- Site Properities -->
+    <title>Hipposcarus</title>
+    
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/skeleton/2.0.4/skeleton.css">
+    
+    <link href="//fonts.googleapis.com/css?family=Raleway:400,300,600" rel="stylesheet" type="text/css">
+
+    <style>
+      #hippo_main_container {
+          background-image: url("/static/img/logosmall.jpg");
+          background-repeat: no-repeat;
+      }
+      #hippo_main_menu {
+          padding-left: 90px;
+      }
+      #hippo_main_menu > a {
+          text-decoration: none;
+          color: #333333;
+      }
+      
+      #hippo_sidebar {
+          padding-top: 80px;
+      }
+
+      xmp {
+          white-space:pre-wrap;
+          word-wrap:break-word;
+      }
+
+      .bgred {
+          background-color: #D4746A;
+      }
+      .bgyellow {
+          background-color: #D4C16A;
+      }
+      .bgblue {
+          background-color: #5F5293;
+      }
+      .bggreen {
+          background-color:  #50A162;
+      }
+      .shacol {
+      font-family: "Lucida Console", Monaco, monospace;
+      font-size: very-small;
+      color:white;
+      }
+      a {
+      text-decoration: none;
+      }
+    </style>
+    {% block in_head %}
+    {% endblock %}
+
+
+    <script>
+      $( document ).ready(function() {
+      {% block in_docready %}
+      {% endblock %}
+      });
+    </script>
+  </head>
+  
+  <body>
+    <!-- top menu -->
+    <div id="hippo_main_container" class="container">
+      <div class="row">
+        <div id="hippo_main_menu" class="twelve columns">
+          <a href="/">Hipposcarus</a> / 
+          <a href="/sha1sum/" class="pure-menu-link">sha1sum</a> /
+          <a href="/aggregate" class="pure-menu-link">aggregate</a> /
+          <a href="/waste" class="pure-menu-link">waste</a> 
+        </div>
+      </div>
+    {% block body %}
+    {% endblock %}
+</body></html>
