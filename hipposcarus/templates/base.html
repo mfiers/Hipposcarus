@@ -63,6 +63,13 @@
 
     <script>
       $( document ).ready(function() {
+      
+        $('#input_sha1sum').keypress(function (e) {
+          if (e.which == 13) {
+            url = "/sha1sum/" + $("#input_sha1sum").val();
+            window.location = url;
+            return false; }});
+
       {% block in_docready %}
       {% endblock %}
       });
@@ -73,12 +80,16 @@
     <!-- top menu -->
     <div id="hippo_main_container" class="container">
       <div class="row">
-        <div id="hippo_main_menu" class="twelve columns">
+        <div id="hippo_main_menu" class="eight columns">
           <a href="/">Hipposcarus</a> / 
           <a href="/sha1sum/" class="pure-menu-link">sha1sum</a> /
           <a href="/aggregate" class="pure-menu-link">aggregate</a> /
           <a href="/waste" class="pure-menu-link">waste</a> 
         </div>
+        <div id="hippo_main_menu" class="four columns" style="text-align: right;">
+          <small><input placeholder="<sha1sum>" id="input_sha1sum" style="padding:2px; margin:2px; height: 24px;" type="text" id="sha1sum" size=40 /></small>
+        </div>
+                  
       </div>
     {% block body %}
     {% endblock %}
