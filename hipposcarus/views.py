@@ -7,9 +7,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
-    
+
 from flask import send_from_directory
 from flask import Flask, render_template, request, url_for
+
+from werkzeug.contrib.cache import SimpleCache
 
 import pymongo
 
@@ -17,6 +19,7 @@ from .util import render, get_flask_app
 from . import util
 from .data import get_latest_csum, get_trans_db, get_transact_dbs, get_waste_db
 
+CACHE = SimpleCache()
 app = get_flask_app()
 
 
@@ -27,42 +30,51 @@ def index():
     _time, csum = get_latest_csum()
     context['nofiles'] = csum['count'].sum()
     context['nobytes'] = csum['sum'].sum()
-    
+
     return render('index.html', context)
 
 @app.route("/waste")
 @app.route("/waste/")
 @app.route("/waste/<text>")
 def waste(text=None):
+
+    global CACHE
+
+    cachename = 'waste' if text is None else 'waste_text'
+    rv = CACHE.get(cachename)
+    if not rv is None:
+        return rv
+
     context = {}
     context['text'] = text
     wdb = get_waste_db()
     clc = get_trans_db()
-    
+
     w = list(wdb.find().sort('time', pymongo.DESCENDING).limit(1))[0]
     data = pd.DataFrame(w['data'][:20])
     csum_data = {}
     context['total_waste'] = data['waste'].sum()
-    
+
     for name, row in data.iterrows():
         cd = list(clc.find({"sha1sum": row['_id']}))
         csum_data[row['_id']] = cd
-    
+
     context['w'] = w
     context['csum'] = csum_data
     context['data'] = data
 
-    return render('waste.html', context)
-
+    rv = render('waste.html', context)
+    CACHE.set(cachename, rv, timeout=12 * 60 * 60)
+    return rv
 
 @app.route("/sha1sum/")
 @app.route("/sha1sum/<sha1sum>")
 def sha1sum_view(sha1sum=None):
 
-        
+
     clc = get_trans_db()
     sh2t_db, t_db = get_transact_dbs()
-    
+
     context = {'sha1sum': sha1sum}
     query = {'sha1sum' : sha1sum}
     result = clc.find(query)
@@ -73,10 +85,10 @@ def sha1sum_view(sha1sum=None):
     transactions = list(t_db.find({'_id': {"$in": tacts}}))
     for t in transactions:
         t['iocats'] = set([x['category'] for x in t['io']])
-        
+
     context['transactions'] = transactions
 
-    
+
     return render('sha1sum.html', context)
 
 
@@ -84,7 +96,7 @@ def sha1sum_view(sha1sum=None):
 def aggregate_view():
 
     aggregate_on = request.args.get('aggon', 'category')
-    
+
     time, csum = get_latest_csum()
     stime = time.strftime("%Y-%m-%y")
 
@@ -101,7 +113,7 @@ def aggregate_view():
     filters_selected = {}
 
     original_csum = csum.copy()
-    
+
     for ftype in 'pi project volume filetype backup'.split():
         selected = request.args.get('filter_' + ftype, "")
         if selected:
@@ -111,7 +123,7 @@ def aggregate_view():
             csum = csum[csum[ftype].isin(selected)]
             filters_selected[ftype] = selected
         filters[ftype] = original_csum[ftype].copy().drop_duplicates()
-    
+
     context['filters'] = filters
     context['filters_selected'] = filters_selected
 
@@ -134,7 +146,7 @@ def aggregate_view():
 
 
 
-    
+
     #Aggregate & plot
     agg = csum[[aggregate_on, 'sum', 'count']]\
       .fillna('(undefined)')\
@@ -144,7 +156,7 @@ def aggregate_view():
     context['agg'] = agg
 
     dyndir = util.get_dynamic_dir(stime)
-    
+
     if max(agg['sum']) > 1e12:
         agg['sum'] /= 1e12
         unit = 'Tb'
@@ -167,10 +179,10 @@ def aggregate_view():
         cunit = 'k'
     else:
         cunit = ''
-      
+
     dd = agg.sort('sum', inplace=False, ascending=False).copy()
     plt.figure(figsize=(8, 6))
-    
+
     if len(dd) > 20:
         rs = dd.iloc[19:,:].sum()
         dd = dd.iloc[:19,:]
@@ -197,11 +209,8 @@ def aggregate_view():
 
     return render('simple.html', context)
 
-    
+
 @app.route('/dyn/<path:path>')
 def send_dynamic(path):
     ddir = util.get_dynamic_dir()
     return send_from_directory(ddir, path)
-
-    
-
