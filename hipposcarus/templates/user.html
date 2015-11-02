@@ -1,0 +1,74 @@
+{% extends "baseone.html" %}
+
+{% block in_docready %}
+$('#input_user').change(function (e) {
+  url = "/user/" + $("#input_user").val();
+  window.location = url;
+  return false; });
+
+{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div id="hippo_main_menu" class="twelve columns" style="text-align: right;">
+    <select placeholder="<user>" id="input_user">
+      {% for u in all_users %}
+      <option value="{{u}}"{% if u == username %}selected {% endif %}>{{u}}</option>
+      {% endfor %}
+    </select>
+
+  </div>
+</div>
+
+<h2 class="ui center aligned header">User report for:  <b>{{ username }}</b></h2>
+
+Total no files: {{ total_files }}<br>
+Total filesize: {{ total_space|humanfilesize }}<br>
+
+<h3 class="ui center aligned header">Per volume</h3>
+{% for volume, row in per_volume.iterrows() %}
+<div class="row">
+  <div class="two columns"><b>{{ volume }}</b></div>
+  <div class="two columns">{{ row['count'] }}</div>
+  <div class="two columns">{{ row['sum']|humanfilesize }}</div>
+</div>{% endfor %}
+
+<h3 class="ui center aligned header">Largest files</h3>
+{% for bf in bigfiles %}
+{{ singlefile(loop.index, bf) }}
+{% endfor %}
+
+<h3 class="ui center aligned header">Waste: {{ total_waste|humanfilesize }}</h3>
+
+{% if waste|length == 0 %}
+
+<i> no waste found </i>
+
+{% else %}
+
+{% for n, w in waste.iterrows() %}
+
+{% set wd = wdata[w._id] %}
+<div class="row">
+  <div class="nine columns">
+    {{ wd.filenames|join(", ") }}
+  </div>
+  <div class="three columns">
+    <a href="/sha1sum/{{ w._id }}">
+      {{ w._id|shacol }}
+  </a></div>
+</div>
+
+<div class="row">
+  <div class="one column">&nbsp;</div>
+  <div class="three columns">filesize: {{ w['filesize']|humanfilesize }}</div>
+  <div class="three columns">copies: {{ wd.copies }}</div>
+  <div class="three columns">wasting: {{ w['waste']|humanfilesize }}</div>
+
+</div>
+
+
+{% endfor %}
+
+{% endif %}
+{% endblock %}
