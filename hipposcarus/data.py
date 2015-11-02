@@ -36,6 +36,15 @@ def get_latest_csum():
     return raw['time'], data
 
 
+def get_latest_waste():
+    db = get_mongo_db()
+    coll = db['waste']
+    
+    raw = list(coll.find().sort('time', pymongo.DESCENDING).limit(1))[0]
+    data = pd.DataFrame(raw['data'])
+    return raw['time'], data
+
+
 def get_trans_db():
     db = get_mongo_db()
     return db['transient']

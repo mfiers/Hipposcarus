@@ -11,7 +11,7 @@ JENV = None
 APP = None
 
 def get_dynamic_dir(name=None):
-    """
+    """g
     Folder containing the dynamically server generated content
     """
     ddir = Path('~/data/hipposcarus/dynamic').expanduser()
@@ -52,8 +52,14 @@ def get_jinja_env():
 
     JENV = Environment(loader=FileSystemLoader(
         os.path.join(os.path.dirname(__file__), 'templates')))
-    
-    JENV.filters['humanfilesize'] = lambda v: humanize.naturalsize(v)
+
+    def _naturalsize(v):
+        try:
+            return humanize.naturalsize(v)
+        except:
+            return "n.a."
+    JENV.filters['humanfilesize'] = lambda v: _naturalsize(v)
+#    JENV.filters['humanfilesize'] = lambda v: type(v)
     JENV.filters['humanday'] = lambda v: humanize.naturalday(v)
     JENV.filters['shacol'] = shasum_to_colors
     return JENV
