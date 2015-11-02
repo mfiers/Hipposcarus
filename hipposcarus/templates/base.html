@@ -1,3 +1,26 @@
+{%- macro singlefile(no, f) %}
+<div class="row">
+  <div class="one columns">{{no}}</div>
+  <div class="eight columns"><b>{{ f.filename }}</b></div>
+  <div class="three columns">
+    <a href="/sha1sum/{{ f.sha1sum }}">
+      {{ f.sha1sum|shacol }}
+  </a></div>
+</div>
+<div class="row">
+  <div class="one columns">&nbsp;</div>
+  <div class="two columns">{{ f.volume }}</div>
+  <div class="two columns">{{ f.username }}</div>
+  <div class="three columns">{{ f.filesize|humanfilesize }}</div>
+  <div class="four columns"><small>mtime: {{ f.mtime|humanday }}, atime: {{ f.atime|humanday }}</small></div>
+</div>
+<div class="row">
+  <div class="one columns">&nbsp;</div>
+  <div class="eleven columns"><small>{{ f.dirname }}</small></div>
+</div>
+{% endmacro -%}
+
+
 <!DOCTYPE html>
 <html>
   <head>
@@ -19,6 +42,11 @@
           background-image: url("/static/img/logosmall.jpg");
           background-repeat: no-repeat;
       }
+
+      h3 {
+          padding-top: 20px;
+      }
+      
       #hippo_main_menu {
           padding-left: 90px;
       }
@@ -83,6 +111,7 @@
         <div id="hippo_main_menu" class="eight columns">
           <a href="/">Hipposcarus</a> / 
           <a href="/sha1sum/" class="pure-menu-link">sha1sum</a> /
+          <a href="/user/" class="pure-menu-link">user</a> /
           <a href="/aggregate" class="pure-menu-link">aggregate</a> /
           <a href="/waste" class="pure-menu-link">waste</a> 
         </div>

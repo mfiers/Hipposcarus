@@ -17,7 +17,8 @@ import pymongo
 
 from .util import render, get_flask_app
 from . import util
-from .data import get_latest_csum, get_trans_db, get_transact_dbs, get_waste_db
+from .data import get_latest_csum, get_trans_db, get_transact_dbs, \
+    get_waste_db, get_latest_waste
 
 CACHE = SimpleCache()
 app = get_flask_app()
@@ -32,6 +33,58 @@ def index():
     context['nobytes'] = csum['sum'].sum()
 
     return render('index.html', context)
+
+
+@app.route("/user")
+@app.route("/user/")
+@app.route("/user/<username>")
+def user(username=None):
+
+    context = {}
+
+    time, csum = get_latest_csum()
+    clc = get_trans_db()
+
+    wtime, waste = get_latest_waste()
+    waste = waste[waste['user'].apply(lambda x: username in x)][:20]
+    context['total_waste'] = waste['filesize'].sum()
+    waste_data = {}
+    for name, row in waste.iterrows():
+        cdata = {}
+        cd = list(clc.find({"sha1sum": row['_id']}))
+        cdata['copies'] = len(cd)
+        filenames = set()
+        for _f in cd:
+            filenames.add(_f['filename'])
+        cdata['filenames'] = list(sorted(filenames))
+        cdata['data'] = cd
+        waste_data[row['_id']] = cdata
+
+    context['waste'] = waste
+    context['wdata'] = waste_data
+
+    context['username'] = username
+    context['all_users'] = csum['username'].unique()
+
+    csub = csum[csum['username'] == username]
+
+    context['total_files'] = csub['count'].sum()
+    context['total_space'] = csub['sum'].sum()
+
+    context['csub'] = csub
+    context['per_volume'] = csub['volume count sum'.split()]\
+        .groupby('volume').sum()\
+        .sort('sum', inplace=False, ascending=False)
+
+    biggest_files = list(
+        clc.find(
+            dict(username=username,
+                 filesize={"$exists": True})
+        ).sort([("filesize", -1)]).limit(5))
+    context['bigfiles'] = biggest_files
+
+    return render('user.html', context)
+
 
 @app.route("/waste")
 @app.route("/waste/")
@@ -71,23 +124,21 @@ def waste(text=None):
 @app.route("/sha1sum/<sha1sum>")
 def sha1sum_view(sha1sum=None):
 
-
     clc = get_trans_db()
     sh2t_db, t_db = get_transact_dbs()
 
     context = {'sha1sum': sha1sum}
-    query = {'sha1sum' : sha1sum}
+    query = {'sha1sum': sha1sum}
     result = clc.find(query)
     context['res'] = list(result)
 
-    #transcation#s
+    # transcation#s
     tacts = [x['transaction_id'] for x in sh2t_db.find({'sha1sum': sha1sum})]
     transactions = list(t_db.find({'_id': {"$in": tacts}}))
     for t in transactions:
         t['iocats'] = set([x['category'] for x in t['io']])
 
     context['transactions'] = transactions
-
 
     return render('sha1sum.html', context)
 
@@ -118,7 +169,7 @@ def aggregate_view():
         selected = request.args.get('filter_' + ftype, "")
         if selected:
             selected = pd.Series(selected.split(','))
-            selected[selected=='None'] = None
+            selected[selected == 'None'] = None
             selected = list(selected)
             csum = csum[csum[ftype].isin(selected)]
             filters_selected[ftype] = selected
@@ -134,24 +185,21 @@ def aggregate_view():
 
     context['fileview'] = False
     if request.args.get('fileview', "") == "on":
-        #return fileset
+        # return fileset
         context['fileview'] = True
         clc = get_trans_db()
         query = {}
         for sf, ss in filters_selected.items():
-            query[sf] = { "$in": ss }
-        results = clc.find(query).sort([("filesize", -1)]).limit(10)
+            query[sf] = {"$in": ss}
+            results = clc.find(query).sort([("filesize", -1)]).limit(10)
         context['files'] = results
         return render('simple.html', context)
 
-
-
-
     #Aggregate & plot
     agg = csum[[aggregate_on, 'sum', 'count']]\
-      .fillna('(undefined)')\
-      .groupby(aggregate_on)\
-      .sum()
+        .fillna('(undefined)')\
+        .groupby(aggregate_on)\
+        .sum()
 
     context['agg'] = agg
 
@@ -166,7 +214,8 @@ def aggregate_view():
     elif max(agg['sum']) > 1e6:
         agg['sum'] /= 1e6
         unit = 'Mb'
-    else: unit = 'b'
+    else:
+        unit = 'b'
 
     if max(agg['count']) > 1e9:
         agg['count'] /= 1e9
@@ -184,8 +233,8 @@ def aggregate_view():
     plt.figure(figsize=(8, 6))
 
     if len(dd) > 20:
-        rs = dd.iloc[19:,:].sum()
-        dd = dd.iloc[:19,:]
+        rs = dd.iloc[19:, :].sum()
+        dd = dd.iloc[:19, :]
         dd.loc['(rest)'] = rs
 
     plt.subplots_adjust(wspace=0.1)
@@ -196,12 +245,15 @@ def aggregate_view():
     ax2 = plt.subplot(122)
     sns.barplot(data=dd, x='count', y=dd.index)
     ax2.get_yaxis().set_visible(False)
-    plt.ylabel(""); plt.xlabel("")
+    plt.ylabel("")
+    plt.xlabel("")
     if cunit:
         plt.title("Count (%s)" % cunit)
-    else: plt.title("Count")
+    else:
+        plt.title("Count")
 
-    outfile = tempfile.NamedTemporaryFile(delete=False, dir=dyndir, suffix='.agg.png')
+    outfile = tempfile.NamedTemporaryFile(
+        delete=False, dir=dyndir, suffix='.agg.png')
     outfile.close()
     plt.tight_layout()
     plt.savefig(outfile.name)
